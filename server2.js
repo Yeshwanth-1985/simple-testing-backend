@@ -2,11 +2,6 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
-
-const signin = require('./controllers/signin.js');
-const register = require('./controllers/register.js');
-const profile = require('./controllers/profile.js');
-
 const app = express();
 require("dotenv").config();
 
@@ -29,11 +24,87 @@ app.get('/',(req,res) => {
   res.json("welcome");
 })
 
-app.post('/profile',auth,(req,res) => {profile.handleProfile(req,res,knex)});
+app.post('/profile',auth,(req,res) => {
+  knex.select('*').from('users').where({email: req.user.email})
+  .then(data => {
+    if(data.length){
+      res.json(data[0]);
+      }
+      else 
+        res.status(401).json("user not found");
+    }
+  )
+})
 
-app.post('/login',(req,res) => {signin.handleSignin(req,res,knex,bcrypt,generatetoken)});
+app.post('/login',(req,res) => {
+	let flag=false;
+	let {email, password} = req.body;
+  if(email && password){
+  knex.select('email','hash').from('login').where({email})
+  .then(data => {
+    if(data.length)
+    {
+      if(bcrypt.compareSync(password,data[0].hash))
+        {
+            knex.select('*').from('users').where({email})
+            .then(user => {
+            accesstoken = generatetoken(user[0]);
+            res.json({accesstoken});
+            })
+            .catch(err => res.status(400).json("invalid details and can't signin db"));        
+        }
+        else {
+        	res.status(400).json("details doesn't match");
+        }
+    }
+    else {
+      res.status(400).json("details not found");
+    }
+  })
+  .catch(err => res.status(400).json("db error and can't signin"))
+  }
+  else {
+    res.status(400).json("invalid details and can't signin db");
+  }
+})
 
-app.post('/register',(req,res) => {register.handleRegister(req,res,knex,bcrypt,generatetoken)});
+app.post('/register',(req,res) => {
+ let {email, username, password} = req.body;
+
+ if(email && username && password)
+ {
+    password = bcrypt.hashSync(password, 10);
+
+  knex.transaction(trx => {
+      trx.insert({
+      hash: password,
+      email: email  
+      })
+      .into('login')
+      .returning('email')
+      .then(loginemail => {
+
+      knex('users').insert({name: username,
+      email: loginemail[0],
+      joined: new Date()
+      })
+    .returning('*')
+    .then(data => {
+      console.log(data[0]);
+      const accesstoken = generatetoken(data[0]);
+      res.json({accesstoken});
+    })
+    .catch(err => res.status(401).json("40101"));
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
+    })
+    .catch(err => res.status(400).json("40101"));
+ }
+ else {
+  res.status(401).json("40103");
+ }
+})
 
 function auth(req,res,next) {
 	const authHeader = req.headers['authorization']
