@@ -48,7 +48,9 @@ app.post('/login',(req,res) => {
         {
             knex.select('*').from('users').where({email})
             .then(user => {
+            	console.log("login",user);
             accesstoken = generatetoken(user[0]);
+            console.log(accesstoken);
             res.json({accesstoken});
             })
             .catch(err => res.status(400).json("invalid details and can't signin db"));        
@@ -90,7 +92,7 @@ app.post('/register',(req,res) => {
       })
     .returning('*')
     .then(data => {
-      console.log(data[0]);
+      console.log("register",data[0]);
       const accesstoken = generatetoken(data[0]);
       res.json({accesstoken});
     })
