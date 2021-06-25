@@ -20,8 +20,8 @@ const handleRegister = (req,res,knex,bcrypt,generatetoken) => {
       })
     .returning('*')
     .then(data => {
-      console.log(data[0]);
       const accesstoken = generatetoken(data[0]);
+      console.log(accesstoken);
       res.json({accesstoken});
     })
     .catch(err => res.status(401).json("40101"));

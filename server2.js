@@ -54,6 +54,7 @@ function auth(req,res,next) {
 }
 
 function generatetoken(user) {
+	console.log(user);
   return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
 }
 
