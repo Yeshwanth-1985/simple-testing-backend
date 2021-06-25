@@ -25,6 +25,10 @@ const knex = require('knex')({
   }
 });
 
+app.get('/',(req,res) => {
+  res.json("welcome");
+})
+
 app.post('/profile',auth,(req,res) => {profile.handleProfile(req,res,knex)});
 
 app.post('/login',(req,res) => {signin.handleSignin(req,res,knex,bcrypt,generatetoken)});
