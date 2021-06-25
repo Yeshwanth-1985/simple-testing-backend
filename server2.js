@@ -48,9 +48,7 @@ app.post('/login',(req,res) => {
         {
             knex.select('*').from('users').where({email})
             .then(user => {
-            	console.log("login",user);
             accesstoken = generatetoken(user[0]);
-            console.log(accesstoken);
             res.json({accesstoken});
             })
             .catch(err => res.status(400).json("invalid details and can't signin db"));        
@@ -92,7 +90,6 @@ app.post('/register',(req,res) => {
       })
     .returning('*')
     .then(data => {
-      console.log("register",data[0]);
       const accesstoken = generatetoken(data[0]);
       res.json({accesstoken});
     })
@@ -113,7 +110,6 @@ function auth(req,res,next) {
   console.log(authHeader);
 	const token = authHeader && authHeader.split(' ')[1]
 	if(token == null){
-    console.log(null);
 		res.status(400).json("invalid token")
   }
 
@@ -121,13 +117,11 @@ function auth(req,res,next) {
 		if(err)
 			return res.status(400).json("invalid token");
 		req.user = user;
-		console.log("front user",user);
 		next();
 	})
 }
 
 function generatetoken(user) {
-	console.log(user);
   return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
 }
 
